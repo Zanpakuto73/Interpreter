@@ -1,0 +1,304 @@
+import java.util.*;
+
+
+public class Fightme {
+    public static int counter; // 
+    public static Scanner userInput;
+    public static Stack<String> characterStack = new Stack<>();
+    public static String[] lex;
+    public static Map<String, String> variables = new HashMap<>();
+    
+    public static void main(String[] args) {
+        
+        counter=0;
+        Intro();
+        Scanner scanner= new Scanner(System.in);
+        System.out.print("Enter a string: ");
+        String userInput = scanner.nextLine();
+        lex=userInput.split(" ");
+
+        try {
+        if (P() && counter == lex.length) {
+            System.out.println("This works");
+            String test = characterStack.pop();
+            System.out.println(test);
+        } else {
+            System.out.println("This is not valid");
+        }
+        } catch (ArrayIndexOutOfBoundsException e) {
+            System.out.println("Invalid input format. An error occurred. There needs to be a period at the end.");
+        } 
+        scanner.close();
+    }
+    public static void Intro(){
+        System.out.println("WARNING: PEOPLE ARE DUMB LIKE YOU.");
+        System.out.println("Your string must start with 'T', 'F', '#', '(', or '~'.");
+        System.out.println("Your string must end with '.' else it will not work.");
+        System.out.println("Empty spaces are used as a delimiter. Make sure '->' this does not have a space between it like this '- >'or it will not work. Same goes for ':=' when you declare a variable.");
+        System.out.println("Make sure your variables are defined else they will not work.");
+        System.out.println("Here is an example of how a correct string will work: '# Pi := T ; Pi v F .' This will return as T.");
+    }
+    
+    //<P> = <D> <B>
+    public static boolean P(){
+        if(D()){
+            if(B()){
+                return true;
+            } else{
+                return false;
+            }
+        } else {
+            System.out.println("D is the failure.");
+            return false;
+        }
+    }
+    ///<D> = # var := <V> ; <D> | empty
+    public static boolean D(){
+        if (lex[counter].equals("#")){
+            counter++;
+            String variableName = lex[counter];
+            counter++;
+            if(lex[counter].equals(":=")){
+                counter++;
+                if (V()){
+                    String logic=characterStack.pop();
+                    variables.put(variableName, logic);
+                    counter++;
+                    if(lex[counter].equals(";")){
+                        counter++;
+                        return D();
+                    }else{return false;}
+                }else{return false;}
+    
+            } else{
+                return false;
+            }
+        } else{
+            return true;
+        }
+    }
+    
+    //// <V> = T | F
+    public static boolean V(){
+        if(lex[counter].equals("T")){
+            characterStack.push("T");
+            return true;
+            
+        } else if (lex[counter].equals("F")){
+            characterStack.push("F");
+            return true;
+        }else{
+            return false;
+        }
+    }
+    //// <B> = <IT> .
+     public static boolean B(){
+        if(IT()){
+            if(counter < lex.length && lex[counter].equals(".")){
+                counter++;
+                return true;
+            }
+            return false;
+        }
+        return false;
+    }
+    
+    //// <IT>= <OT> <IT_Tail> 
+    public static boolean IT(){
+        if(OT()){
+            if(IT_Tail()){
+                return true;
+            } else{
+            return false;
+            }
+        }else{
+            return false;
+        }
+    }
+    
+    
+    ////<IT_Tail> = -> <OT> <IT_Tail> | empty string
+    public static boolean IT_Tail(){
+        String op1, op2;
+        
+        if (lex[counter].equals("->")){
+            counter++;
+            if(OT()){
+                op2=characterStack.pop();
+                op1=characterStack.pop();
+                if(op1.equals("T") && op2.equals("F")){
+                    characterStack.push("F");
+                } else{
+                    characterStack.push("T");
+                }
+                if(IT_Tail()){
+                    return true;
+                } else{
+                    return false;
+                }
+            } else{
+                return false;
+            }
+        } else{
+            return true;
+        }
+    }
+    
+    //// <OT>= <AT> <OT_Tail>
+    public static boolean OT(){
+        if(AT()){
+            if(OT_Tail()){
+                return true;
+            } else{
+            return false;
+            }
+        }else{
+            return false;
+        }
+    }
+    
+    
+    //<OT_Tail>= v <AT> <OT_Tail> | empty
+    public static boolean OT_Tail(){
+        String op1, op2;
+        
+        if (lex[counter].equals("v")){
+            counter++;
+            if(AT()){
+                op2=characterStack.pop();
+                op1=characterStack.pop();
+                if(op1.equals("F") && op2.equals("F")){
+                    characterStack.push("F");
+                } else{
+                    characterStack.push("T");
+                }
+                if(OT_Tail()){
+                    return true;
+                } else{
+                    return false;
+                }
+            } else{
+                return false;
+            }
+        } else{
+            return true;
+        }
+        
+    }
+    
+    
+    //<AT>= <L> <AT_Tail>
+    public static boolean AT(){
+        if(L()){
+            if(AT_Tail()){
+                return true;
+            } else{
+            return false;
+            }
+        }else{
+            return false;
+        }
+    }
+    
+    //<AT_Tail>= ^ <L> <AT_Tail>
+    public static boolean AT_Tail(){
+        String op1, op2;
+        
+        if (lex[counter].equals("^")){
+            counter++;
+            if(L()){
+                op2=characterStack.pop();
+                op1=characterStack.pop();
+                if(op1.equals("T") && op2.equals("T")){
+                    characterStack.push("T");
+                } else{
+                    characterStack.push("F");
+                }
+                if(AT_Tail()){
+                    return true;
+                } else{
+                    return false;
+                }
+            } else{
+                return false;
+            }
+        } else{
+            return true;
+        }
+    }
+    
+    //<L>= <A> | ~ (L)
+    public static boolean L(){
+        String op;
+        if(A()){
+            return true;
+        } else if(lex[counter].equals("~")){
+            counter++;
+            if(L()){
+                op=characterStack.pop();
+                if(op.equals("T")){
+                    characterStack.push("F");
+                }else{
+                    characterStack.push("T");
+                }
+                System.out.println("We made it.");
+                return true;
+            } else{
+                System.out.println("Test if this fails");
+                return false;
+            }
+        }else{
+            System.out.println("You did not start with 'T', 'F', '(', or you may have attempted to use a variable that was undefined.");
+            return false;
+        }
+    }
+    
+    /////////<A> = T | F | ( <IT> ) | var
+    
+    public static boolean A(){
+        String temp= lex[counter];
+        String temp2;
+        switch (lex[counter]) {
+            case "T":
+                counter++; // I added this, take whenever
+                characterStack.push("T");
+                return true;
+                //break;
+        
+            case "F":
+                counter++;
+                if (counter < lex.length) {
+                    characterStack.push("F");
+                    return true;
+                } else {
+                    return false;
+                }
+                //break;
+        
+            case "(":
+                counter++; 
+                if (IT()) {
+                    if (lex[counter].equals(")")) {
+                        counter++;
+                        return true;
+                    } else {
+                        return false;
+                    }
+                } else {
+                    return false;
+                }
+                //break;
+        
+            default:
+                if (variables.containsKey(lex[counter])) {
+                    temp2 = variables.get(lex[counter]);
+                    characterStack.push(temp2);
+                    counter++;
+                    return true;
+                } else {
+                    return false;
+                }
+        }
+    }
+}
+
